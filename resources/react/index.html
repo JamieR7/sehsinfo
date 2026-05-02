@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction Time &amp; Hick's Law</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23004587'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='%23fbba07'>⚡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Gotham', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #004587 0%, #002a52 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #fbba07;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .card {
+            background: #fff;
+            color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            color: #004587;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .card p {
+            line-height: 1.7;
+            font-weight: 300;
+            font-size: 1.05rem;
+        }
+
+        .intro {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #fbba07;
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            font-weight: 300;
+            font-size: 1.05rem;
+        }
+
+        .intro strong {
+            color: #fbba07;
+            font-weight: 500;
+        }
+
+        .phase-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .phase-dot {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.5;
+            transition: all 0.4s ease;
+        }
+
+        .phase-dot.active {
+            opacity: 1;
+            background: rgba(251, 186, 7, 0.2);
+            border-color: #fbba07;
+            color: #fbba07;
+        }
+
+        .phase-dot.completed {
+            opacity: 1;
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .test-zone {
+            min-height: 260px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .simple-target {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .simple-target.waiting {
+            background: linear-gradient(135deg, #e73037, #c62828);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(231, 48, 55, 0.4);
+        }
+
+        .simple-target.ready {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
+            transform: scale(1.08);
+            animation: pulse-green 0.6s ease-in-out infinite alternate;
+        }
+
+        .simple-target.too-early {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.4);
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4); }
+            100% { box-shadow: 0 6px 36px rgba(16, 185, 129, 0.7); }
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .choice-btn {
+            height: 110px;
+            border-radius: 14px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            opacity: 0.35;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            border-radius: 11px;
+        }
+
+        .choice-btn.lit {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .choice-btn:nth-child(1) { background: linear-gradient(135deg, #e73037, #c62828); }
+        .choice-btn:nth-child(2) { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .choice-btn:nth-child(3) { background: linear-gradient(135deg, #10b981, #059669); }
+        .choice-btn:nth-child(4) { background: linear-gradient(135deg, #fbba07, #d97706); }
+
+        .key-hint {
+            position: absolute;
+            bottom: 6px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.35);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .trial-counter {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #004587;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .trial-feedback {
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            min-height: 2rem;
+        }
+
+        .trial-feedback.good { color: #10b981; }
+        .trial-feedback.ok { color: #f59e0b; }
+        .trial-feedback.slow { color: #e73037; }
+
+        .action-btn {
+            background: #fbba07;
+            color: #004587;
+            padding: 0.85rem 2.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(251, 186, 7, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .results-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8rem; }
+            .choice-grid { max-width: 300px; }
+            .choice-btn { height: 90px; }
+            .simple-target { width: 180px; height: 180px; font-size: 1.1rem; }
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .result-card .result-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-card .result-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #004587;
+            line-height: 1;
+        }
+
+        .result-card .result-unit {
+            font-size: 1rem;
+            color: #999;
+            margin-top: 0.3rem;
+        }
+
+        .result-card .result-trials {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Redesigned Score Hero ── */
+        .score-hero {
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, rgba(251, 186, 7, 0.1), rgba(251, 186, 7, 0.2));
+            border-radius: 16px;
+            border: 2px solid rgba(251, 186, 7, 0.3);
+        }
+
+        .score-hero .avg-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 0.4rem;
+        }
+
+        .score-hero .avg-big {
+            font-size: 5.5rem;
+            font-weight: 700;
+            color: #004587;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .score-hero .avg-big span {
+            font-size: 2rem;
+            color: #888;
+            font-weight: 400;
+            letter-spacing: 0;
+        }
+
+        .score-hero .avg-cta {
+            font-size: 1rem;
+            color: #555;
+            font-weight: 400;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Score sub-row */
+        .score-subrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 1.1rem;
+            background: rgba(0, 69, 135, 0.07);
+            border: 1.5px solid rgba(0, 69, 135, 0.15);
+            border-radius: 30px;
+            padding: 0.45rem 1.2rem;
+        }
+
+        .score-subrow .score-num {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #004587;
+        }
+
+        .score-subrow .score-sep {
+            color: #ccc;
+            font-weight: 300;
+        }
+
+        .score-subrow .score-desc {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* Meter below score sub-row */
+        .score-meter {
+            width: 100%;
+            max-width: 360px;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin: 0.9rem auto 0.4rem;
+            overflow: hidden;
+        }
+
+        .score-meter-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+            background: linear-gradient(90deg, #e73037, #f59e0b, #fbba07, #10b981);
+        }
+
+        .score-meter-labels {
+            display: flex;
+            justify-content: space-between;
+            max-width: 360px;
+            margin: 0 auto;
+            font-size: 0.72rem;
+            color: #bbb;
+            font-weight: 500;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3rem;
+            height: 200px;
+            margin: 2rem 0;
+            padding: 0 2rem;
+        }
+
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bar {
+            width: 80px;
+            border-radius: 8px 8px 0 0;
+            transition: height 1s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .bar-simple { background: linear-gradient(180deg, #10b981, #059669); }
+        .bar-choice { background: linear-gradient(180deg, #e73037, #c62828); }
+
+        .bar-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #004587;
+        }
+
+        .bar-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #004587;
+            margin-top: 0.3rem;
+        }
+
+        .hicks-law {
+            background: linear-gradient(135deg, rgba(251, 186, 7, 0.08), rgba(251, 186, 7, 0.15));
+            border: 2px solid rgba(251, 186, 7, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .hicks-law h3 {
+            color: #004587;
+            font-size: 1.15rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .hicks-law p {
+            font-size: 0.95rem;
+            color: #444;
+            line-height: 1.7;
+        }
+
+        .hidden { display: none !important; }
+
+        .test-instruction {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+
+        .input-hint {
+            display: inline-block;
+            background: #f0f4f8;
+            color: #555;
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .input-hint kbd {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.85rem;
+            font-family: 'Inter', monospace;
+            font-weight: 700;
+            color: #004587;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            margin: 0 1px;
+        }
+
+        .trial-history {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .trial-pill {
+            background: #f0f0f0;
+            color: #004587;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: pop-in 0.3s ease;
+        }
+
+        @keyframes pop-in {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .wrong-feedback {
+            color: #e73037;
+            font-weight: 700;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .ready-overlay .ready-text {
+            font-size: 1.15rem;
+            color: #004587;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .ready-overlay .ready-start-btn {
+            background: #fbba07;
+            color: #004587;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: pulse-ready 1.5s ease-in-out infinite;
+        }
+
+        .ready-overlay .ready-start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(251, 186, 7, 0.4);
+        }
+
+        @keyframes pulse-ready {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 186, 7, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(251, 186, 7, 0); }
+        }
+
+        .ready-wrapper .test-zone {
+            filter: blur(1px);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .ready-wrapper.active .test-zone {
+            filter: none;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ready-wrapper.active .ready-overlay {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Reaction Time Test</h1>
+            <p>How quickly can you react? Test your reflexes to explore Hick's Law</p>
+        </div>
+
+        <div class="phase-indicator">
+            <div class="phase-dot active" id="phase1Dot"><span>1</span> Simple Reaction</div>
+            <div class="phase-dot" id="phase2Dot"><span>2</span> Choice Reaction</div>
+            <div class="phase-dot" id="phase3Dot"><span>3</span> Results</div>
+        </div>
+
+        <!-- WELCOME -->
+        <div id="welcomeScreen">
+            <div class="intro">
+                <p><strong>What is Hick's Law?</strong></p>
+                <p>Hick's Law predicts that reaction time increases as the number of stimulus-response alternatives increases. You'll test this yourself with two rounds:</p>
+                <br>
+                <p>🟢 <strong>Round 1 — Simple Reaction:</strong> One stimulus, one response. Tap the circle (or press <kbd>1</kbd> on a keyboard) as fast as you can when you see green.</p>
+                <p>🎨 <strong>Round 2 — Choice Reaction:</strong> Four colours, four responses. Only tap the one that lights up (or use keys <kbd>1</kbd> <kbd>2</kbd> <kbd>9</kbd> <kbd>0</kbd>).</p>
+                <br>
+                <p>Complete 5 trials for each, then compare your averages to see Hick's Law in action!</p>
+            </div>
+            <div style="text-align: center;">
+                <button class="action-btn" id="startBtn" onclick="startSimpleTest()">Let's Go! 🚀</button>
+            </div>
+        </div>
+
+        <!-- SIMPLE REACTION -->
+        <div id="simpleScreen" class="hidden">
+            <div class="card">
+                <h2>🟢 Round 1: Simple Reaction Time</h2>
+                <p class="test-instruction">Wait for the circle to turn <strong style="color:#10b981">GREEN</strong>, then tap it as fast as you can!</p>
+                <p class="input-hint">💻 On a laptop? Press <kbd>1</kbd> instead of clicking</p>
+                <div class="ready-wrapper" id="simpleReadyWrapper">
+                    <div class="ready-overlay" id="simpleReadyOverlay">
+                        <div class="ready-text">Read the instructions above, then tap the button below<br>(or press <kbd>1</kbd>) when you're ready</div>
+                        <button class="ready-start-btn" onclick="beginSimpleTrials()">Start Round 1 ▶</button>
+                    </div>
+                    <div class="trial-counter" id="simpleTrialCounter">Trial 1 of 5</div>
+                    <div class="test-zone">
+                        <div class="simple-target waiting" id="simpleTarget" onclick="handleSimpleClick()">Wait...</div>
+                        <div class="trial-feedback" id="simpleFeedback"></div>
+                    </div>
+                </div>
+                <div class="trial-history" id="simpleHistory"></div>
+            </div>
+        </div>
+
+        <!-- CHOICE REACTION -->
+        <div id="choiceScreen" class="hidden">
+            <div class="card">
+                <h2>🎨 Round 2: Choice Reaction Time</h2>
+                <p class="test-instruction">4 colours below. Wait for one to <strong>light up</strong>, then tap <em>only that one</em>!</p>
+                <p class="input-hint">💻 On a laptop? Use keys: <kbd>1</kbd> Red · <kbd>2</kbd> Blue · <kbd>9</kbd> Green · <kbd>0</kbd> Yellow</p>
+                <div class="ready-wrapper" id="choiceReadyWrapper">
+                    <div class="ready-overlay" id="choiceReadyOverlay">
+                        <div class="ready-text">Read the instructions above, then tap the button below<br>(or press <kbd>1</kbd>) when you're ready</div>
+                        <button class="ready-start-btn" onclick="beginChoiceTrials()">Start Round 2 ▶</button>
+                    </div>
+                    <div class="trial-counter" id="choiceTrialCounter">Trial 1 of 5</div>
+                    <div class="test-zone">
+                        <div class="choice-grid" id="choiceGrid">
+                            <button class="choice-btn" data-color="0" onclick="handleChoiceClick(0)">🔴<span class="key-hint">key 1</span></button>
+                            <button class="choice-btn" data-color="1" onclick="handleChoiceClick(1)">🔵<span class="key-hint">key 2</span></button>
+                            <button class="choice-btn" data-color="2" onclick="handleChoiceClick(2)">🟢<span class="key-hint">key 9</span></button>
+                            <button class="choice-btn" data-color="3" onclick="handleChoiceClick(3)">🟡<span class="key-hint">key 0</span></button>
+                        </div>
+                        <div class="trial-feedback" id="choiceFeedback"></div>
+                        <div class="wrong-feedback hidden" id="wrongFeedback"></div>
+                    </div>
+                </div>
+                <div class="trial-history" id="choiceHistory"></div>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div id="resultsScreen" class="hidden">
+            <div class="card">
+                <h2>📊 Your Results</h2>
+
+                <!-- Redesigned hero: avg RT headline, score as subheading -->
+                <div class="score-hero">
+                    <div class="avg-label">Average Reaction Time</div>
+                    <div class="avg-big" id="overallAvg">— <span>ms</span></div>
+                    <div class="avg-cta">Enter this in your Panthers Fitness Challenge app</div>
+
+                    <!-- Score sub-row -->
+                    <div class="score-subrow">
+                        <span class="score-num" id="overallScore">—</span>
+                        <span class="score-sep">/</span>
+                        <span class="score-num">25</span>
+                        <span class="score-sep">·</span>
+                        <span class="score-desc" id="scoreDescriptor"></span>
+                    </div>
+
+                    <div class="score-meter">
+                        <div class="score-meter-fill" id="scoreMeterFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="score-meter-labels">
+                        <span>1</span>
+                        <span>Average</span>
+                        <span>25</span>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card" style="background: rgba(16,185,129,0.08); border-radius: 12px;">
+                        <div class="result-label">Simple Reaction</div>
+                        <div class="result-value" id="simpleAvg">—</div>
+                        <div class="result-unit">milliseconds</div>
+                        <div class="result-trials" id="simpleTrialsList"></div>
+                    </div>
+                    <div class="result-card" style="background: rgba(231,48,55,0.08); border-radius: 12px;">
+                        <div class="result-label">Choice Reaction</div>
+                        <div class="result-value" id="choiceAvg">—</div>
+                        <div class="result-unit">milliseconds</div>
+                        <div class="result-trials" id="choiceTrialsList"></div>
+                    </div>
+                </div>
+
+                <div class="bar-chart" id="barChart">
+                    <div class="bar-wrapper">
+                        <div class="bar-value" id="barSimpleValue"></div>
+                        <div class="bar bar-simple" id="barSimple" style="height: 0;"></div>
+                        <div class="bar-label">Simple (1)</div>
+                    </div>
+                    <div class="bar-wrapper">
+                        <div class="bar-value" id="barChoiceValue"></div>
+                        <div class="bar bar-choice" id="barChoice" style="height: 0;"></div>
+                        <div class="bar-label">Choice (4)</div>
+                    </div>
+                </div>
+
+                <div class="hicks-law">
+                    <p id="hicksComment"></p>
+                    <br>
+                    <p><em>Can you think of an example in sport? What do you think would happen to your reaction time if there were 10 options?</em></p>
+                    <br>
+                    <details style="cursor: pointer; background: rgba(0,69,135,0.06); border-radius: 8px; padding: 0.75rem 1rem;">
+                        <summary style="font-weight: 600; color: #004587; font-size: 0.95rem; list-style: none; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="transition: transform 0.2s;" class="toggle-arrow">▶</span> Click here for some examples
+                        </summary>
+                        <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <p style="font-weight: 600; color: #004587; margin-bottom: 0.25rem;">⚽ Penalty kick in football (soccer):</p>
+                                <p style="font-size: 0.92rem;">A goalkeeper who commits early to diving only left or right (two choices) can react faster than one trying to cover left, right, high, low, chip and wait (many choices). Fewer anticipated options = quicker decision.</p>
+                            </div>
+                            <div>
+                                <p style="font-weight: 600; color: #004587; margin-bottom: 0.25rem;">🏐 Volleyball defense:</p>
+                                <p style="font-size: 0.92rem;">A defender who is only reading for a hard cross-court spike can move sooner than one trying to prepare for cross-court, line shot, tip, roll shot and cut shot all at once.</p>
+                            </div>
+                            <div>
+                                <p style="font-weight: 600; color: #004587; margin-bottom: 0.25rem;">🎾 Tennis return of serve:</p>
+                                <p style="font-size: 0.92rem;">A returner who decides "If it's to my forehand, I'll drive cross-court" (one clear response) reacts faster than someone trying to choose between drive, slice, drop shot or lob off the same serve.</p>
+                            </div>
+                            <div>
+                                <p style="font-weight: 600; color: #004587; margin-bottom: 0.25rem;">🏀 Basketball point guard:</p>
+                                <p style="font-size: 0.92rem;">On a fast break, having two simple reads (pass to wing or take layup) allows a quicker play than scanning for multiple complex options (kick-out three, lob pass, pull-up jumper, dump-off pass, reset).</p>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div style="text-align: center; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="action-btn" onclick="resetTest()">Try Again 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_TRIALS = 5;
+        let simpleTimes = [];
+        let choiceTimes = [];
+        let simpleTrialNum = 0;
+        let choiceTrialNum = 0;
+        let stimulusTimeout = null;
+        let stimulusTime = 0;
+        let waitingForStimulus = false;
+        let stimulusShown = false;
+        let choiceTarget = -1;
+        let choiceWaiting = false;
+        let choiceStimulus = false;
+        let consecutiveWrong = 0;
+        let activeScreen = 'welcome';
+
+        function show(id) { document.getElementById(id).classList.remove('hidden'); }
+        function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function setPhase(phase) {
+            ['phase1Dot', 'phase2Dot', 'phase3Dot'].forEach((id, i) => {
+                const el = document.getElementById(id);
+                el.classList.remove('active', 'completed');
+                if (i + 1 < phase) el.classList.add('completed');
+                if (i + 1 === phase) el.classList.add('active');
+            });
+        }
+
+        function randomDelay() { return 2000 + Math.random() * 3000; }
+
+        function getFeedbackClass(ms) {
+            if (ms < 250) return 'good';
+            if (ms < 400) return 'ok';
+            return 'slow';
+        }
+
+        function getFeedbackEmoji(ms) {
+            if (ms < 200) return '⚡ Incredible!';
+            if (ms < 250) return '🔥 Awesome!';
+            if (ms < 350) return '👍 Nice!';
+            if (ms < 500) return '😊 Good';
+            return '🐢 Keep trying!';
+        }
+
+        function calculateScore(simpleAvg, choiceAvg) {
+            const combined = simpleAvg * 0.4 + choiceAvg * 0.6;
+            const raw = 25 / (1 + Math.exp((combined - 600) / 140));
+            return Math.max(1, Math.min(25, Math.round(raw)));
+        }
+
+        function getScoreDescriptor(score) {
+            if (score >= 23) return '🏆 Elite — superhuman reflexes!';
+            if (score >= 20) return '⚡ Exceptional — lightning fast!';
+            if (score >= 17) return '🔥 Excellent — seriously quick!';
+            if (score >= 14) return '💪 Great — above average reflexes';
+            if (score >= 11) return '👍 Good — solid reaction time';
+            if (score >= 8) return '😊 Average — right in the middle';
+            if (score >= 5) return '🙂 Below average — room to improve';
+            if (score >= 3) return '🐢 Slow — keep practising!';
+            return '🦥 Very slow — were you asleep?';
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (activeScreen === 'simple-ready' && e.key === '1') { e.preventDefault(); beginSimpleTrials(); return; }
+            if (activeScreen === 'choice-ready' && e.key === '1') { e.preventDefault(); beginChoiceTrials(); return; }
+            if (activeScreen === 'simple' && e.key === '1') { e.preventDefault(); handleSimpleClick(); return; }
+            if (activeScreen === 'choice') {
+                const keyMap = { '1': 0, '2': 1, '9': 2, '0': 3 };
+                if (e.key in keyMap) { e.preventDefault(); handleChoiceClick(keyMap[e.key]); return; }
+            }
+        });
+
+        function startSimpleTest() {
+            hide('welcomeScreen');
+            show('simpleScreen');
+            setPhase(1);
+            activeScreen = 'simple-ready';
+            simpleTrialNum = 0;
+            simpleTimes = [];
+            document.getElementById('simpleReadyWrapper').classList.remove('active');
+        }
+
+        function beginSimpleTrials() {
+            document.getElementById('simpleReadyWrapper').classList.add('active');
+            activeScreen = 'simple';
+            nextSimpleTrial();
+        }
+
+        function nextSimpleTrial() {
+            simpleTrialNum++;
+            if (simpleTrialNum > TOTAL_TRIALS) { finishSimple(); return; }
+            document.getElementById('simpleTrialCounter').textContent = `Trial ${simpleTrialNum} of ${TOTAL_TRIALS}`;
+            document.getElementById('simpleFeedback').textContent = '';
+            const target = document.getElementById('simpleTarget');
+            target.className = 'simple-target waiting';
+            target.textContent = 'Wait...';
+            waitingForStimulus = true;
+            stimulusShown = false;
+            stimulusTimeout = setTimeout(() => {
+                target.className = 'simple-target ready';
+                target.textContent = 'CLICK!';
+                stimulusTime = performance.now();
+                stimulusShown = true;
+            }, randomDelay());
+        }
+
+        function handleSimpleClick() {
+            if (!waitingForStimulus && !stimulusShown) return;
+            if (waitingForStimulus && !stimulusShown) {
+                clearTimeout(stimulusTimeout);
+                const target = document.getElementById('simpleTarget');
+                target.className = 'simple-target too-early';
+                target.textContent = 'Too early!';
+                document.getElementById('simpleFeedback').textContent = '⚠️ Wait for green!';
+                document.getElementById('simpleFeedback').className = 'trial-feedback ok';
+                waitingForStimulus = false;
+                setTimeout(() => { simpleTrialNum--; nextSimpleTrial(); }, 1200);
+                return;
+            }
+            const rt = Math.round(performance.now() - stimulusTime);
+            simpleTimes.push(rt);
+            waitingForStimulus = false;
+            stimulusShown = false;
+            const fb = document.getElementById('simpleFeedback');
+            fb.textContent = `${rt} ms — ${getFeedbackEmoji(rt)}`;
+            fb.className = `trial-feedback ${getFeedbackClass(rt)}`;
+            const history = document.getElementById('simpleHistory');
+            const pill = document.createElement('span');
+            pill.className = 'trial-pill';
+            pill.textContent = `${rt} ms`;
+            history.appendChild(pill);
+            const target = document.getElementById('simpleTarget');
+            target.className = 'simple-target waiting';
+            target.textContent = '✓';
+            setTimeout(nextSimpleTrial, 1200);
+        }
+
+        function finishSimple() {
+            hide('simpleScreen');
+            setPhase(2);
+            startChoiceTest();
+        }
+
+        function startChoiceTest() {
+            show('choiceScreen');
+            activeScreen = 'choice-ready';
+            choiceTrialNum = 0;
+            choiceTimes = [];
+            document.getElementById('choiceReadyWrapper').classList.remove('active');
+        }
+
+        function beginChoiceTrials() {
+            document.getElementById('choiceReadyWrapper').classList.add('active');
+            activeScreen = 'choice';
+            nextChoiceTrial();
+        }
+
+        function nextChoiceTrial() {
+            choiceTrialNum++;
+            if (choiceTrialNum > TOTAL_TRIALS) { finishChoice(); return; }
+            document.getElementById('choiceTrialCounter').textContent = `Trial ${choiceTrialNum} of ${TOTAL_TRIALS}`;
+            document.getElementById('choiceFeedback').textContent = '';
+            document.getElementById('wrongFeedback').classList.add('hidden');
+            document.querySelectorAll('.choice-btn').forEach(btn => { btn.classList.remove('lit'); btn.disabled = false; });
+            choiceTarget = -1;
+            choiceWaiting = true;
+            choiceStimulus = false;
+            stimulusTimeout = setTimeout(() => {
+                choiceTarget = Math.floor(Math.random() * 4);
+                document.querySelectorAll('.choice-btn')[choiceTarget].classList.add('lit');
+                stimulusTime = performance.now();
+                choiceStimulus = true;
+            }, randomDelay());
+        }
+
+        function handleChoiceClick(index) {
+            if (choiceWaiting && !choiceStimulus) {
+                clearTimeout(stimulusTimeout);
+                const fb = document.getElementById('choiceFeedback');
+                fb.textContent = '⚠️ Wait for a colour to light up!';
+                fb.className = 'trial-feedback ok';
+                setTimeout(() => { choiceTrialNum--; nextChoiceTrial(); }, 1200);
+                return;
+            }
+            if (!choiceStimulus) return;
+            if (index !== choiceTarget) {
+                consecutiveWrong++;
+                if (consecutiveWrong >= 3) {
+                    const PENALTY_MS = 2000;
+                    choiceTimes.push(PENALTY_MS);
+                    choiceWaiting = false;
+                    choiceStimulus = false;
+                    consecutiveWrong = 0;
+                    document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+                    const wrongFb = document.getElementById('wrongFeedback');
+                    wrongFb.textContent = '✗ 3 wrong in a row — 2000ms penalty!';
+                    wrongFb.classList.remove('hidden');
+                    const fb = document.getElementById('choiceFeedback');
+                    fb.textContent = `${PENALTY_MS} ms penalty`;
+                    fb.className = 'trial-feedback slow';
+                    const history = document.getElementById('choiceHistory');
+                    const pill = document.createElement('span');
+                    pill.className = 'trial-pill';
+                    pill.style.background = '#fde8e8';
+                    pill.style.color = '#e73037';
+                    pill.textContent = `${PENALTY_MS} ms ✗`;
+                    history.appendChild(pill);
+                    setTimeout(nextChoiceTrial, 1500);
+                } else {
+                    clearTimeout(stimulusTimeout);
+                    choiceWaiting = false;
+                    choiceStimulus = false;
+                    document.querySelectorAll('.choice-btn').forEach(btn => { btn.classList.remove('lit'); btn.disabled = true; });
+                    const wrongFb = document.getElementById('wrongFeedback');
+                    wrongFb.textContent = `✗ Wrong colour! Try again (${consecutiveWrong}/3 before penalty)`;
+                    wrongFb.classList.remove('hidden');
+                    const fb = document.getElementById('choiceFeedback');
+                    fb.textContent = '⚠️ Restarting trial...';
+                    fb.className = 'trial-feedback ok';
+                    setTimeout(() => { choiceTrialNum--; nextChoiceTrial(); }, 1200);
+                }
+                return;
+            }
+            consecutiveWrong = 0;
+            const rt = Math.round(performance.now() - stimulusTime);
+            choiceTimes.push(rt);
+            choiceWaiting = false;
+            choiceStimulus = false;
+            document.getElementById('wrongFeedback').classList.add('hidden');
+            const fb = document.getElementById('choiceFeedback');
+            fb.textContent = `${rt} ms — ${getFeedbackEmoji(rt)}`;
+            fb.className = `trial-feedback ${getFeedbackClass(rt)}`;
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+            const history = document.getElementById('choiceHistory');
+            const pill = document.createElement('span');
+            pill.className = 'trial-pill';
+            pill.textContent = `${rt} ms`;
+            history.appendChild(pill);
+            setTimeout(nextChoiceTrial, 1200);
+        }
+
+        function finishChoice() {
+            hide('choiceScreen');
+            setPhase(3);
+            activeScreen = 'results';
+            showResults();
+        }
+
+        function showResults() {
+            show('resultsScreen');
+
+            const simpleAvg = Math.round(simpleTimes.reduce((a, b) => a + b, 0) / simpleTimes.length);
+            const choiceAvg = Math.round(choiceTimes.reduce((a, b) => a + b, 0) / choiceTimes.length);
+
+            // Plain mean of all 10 trials for headline
+            const allTimes = [...simpleTimes, ...choiceTimes];
+            const overallAvg = Math.round(allTimes.reduce((a, b) => a + b, 0) / allTimes.length);
+
+            document.getElementById('simpleAvg').textContent = simpleAvg;
+            document.getElementById('choiceAvg').textContent = choiceAvg;
+            document.getElementById('overallAvg').innerHTML = `${overallAvg} <span>ms</span>`;
+
+            document.getElementById('simpleTrialsList').textContent = `Trials: ${simpleTimes.map(t => t + 'ms').join(', ')}`;
+            document.getElementById('choiceTrialsList').textContent = `Trials: ${choiceTimes.map(t => t + 'ms').join(', ')}`;
+
+            const score = calculateScore(simpleAvg, choiceAvg);
+            document.getElementById('overallScore').textContent = score;
+            document.getElementById('scoreDescriptor').textContent = getScoreDescriptor(score);
+
+            setTimeout(() => {
+                document.getElementById('scoreMeterFill').style.width = `${(score / 25) * 100}%`;
+            }, 100);
+
+            const maxVal = Math.max(simpleAvg, choiceAvg);
+            const maxHeight = 160;
+            document.getElementById('barSimpleValue').textContent = `${simpleAvg} ms`;
+            document.getElementById('barChoiceValue').textContent = `${choiceAvg} ms`;
+            setTimeout(() => {
+                document.getElementById('barSimple').style.height = `${(simpleAvg / maxVal) * maxHeight}px`;
+                document.getElementById('barChoice').style.height = `${(choiceAvg / maxVal) * maxHeight}px`;
+            }, 100);
+
+            const diff = choiceAvg - simpleAvg;
+            const pct = Math.round((diff / simpleAvg) * 100);
+            const comment = document.getElementById('hicksComment');
+            if (diff > 0) {
+                comment.innerHTML = `<strong>Your results show Hick's Law in action!</strong> Your choice reaction time was <strong>${diff} ms slower</strong> (${pct}% increase) than your simple reaction time. With 4 choices instead of 1, your brain needed extra processing time to identify the correct stimulus and select the matching response. This supports the <strong>information processing approach</strong> in sport psychology — the more decisions an athlete has to make, the slower their response.`;
+            } else {
+                comment.innerHTML = `<strong>Interesting!</strong> Your choice reaction time was actually similar to (or faster than) your simple reaction time. This is unusual and may be due to practice effects, anticipation, or a small sample size. Try running the test again to see if the pattern holds, or discuss with your class what variables might have affected the result.`;
+            }
+        }
+
+        function resetTest() {
+            clearTimeout(stimulusTimeout);
+            simpleTimes = []; choiceTimes = [];
+            simpleTrialNum = 0; choiceTrialNum = 0;
+            waitingForStimulus = false; stimulusShown = false;
+            choiceTarget = -1; choiceWaiting = false; choiceStimulus = false;
+            consecutiveWrong = 0; activeScreen = 'welcome';
+            document.getElementById('simpleHistory').innerHTML = '';
+            document.getElementById('choiceHistory').innerHTML = '';
+            document.getElementById('simpleFeedback').textContent = '';
+            document.getElementById('choiceFeedback').textContent = '';
+            document.getElementById('wrongFeedback').classList.add('hidden');
+            document.getElementById('barSimple').style.height = '0';
+            document.getElementById('barChoice').style.height = '0';
+            document.getElementById('scoreMeterFill').style.width = '0%';
+            document.querySelectorAll('.choice-btn').forEach(btn => { btn.classList.remove('lit'); btn.disabled = false; });
+            const target = document.getElementById('simpleTarget');
+            target.className = 'simple-target waiting';
+            target.textContent = 'Wait...';
+            hide('resultsScreen'); hide('simpleScreen'); hide('choiceScreen');
+            show('welcomeScreen'); setPhase(1);
+        }
+    </script>
+</body>
+</html>
