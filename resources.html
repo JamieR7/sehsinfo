@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEHS Resources</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23004587'/><text x='50' y='72' font-size='64' text-anchor='middle'>📚</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #002a52;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: #004587;
+            border-bottom: 3px solid #fbba07;
+            padding: 0 1rem;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #fbba07;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            border: 1.5px solid rgba(251,186,7,0.35);
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .back-btn:hover { background: rgba(251,186,7,0.12); }
+
+        .topbar-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a class="back-btn" href="index.html">← Back</a>
+        <span class="topbar-title">SEHS Resources</span>
+    </div>
+    <iframe src="https://jamier7.github.io/2wins/" title="SEHS Resources" allowfullscreen></iframe>
+</body>
+</html>
